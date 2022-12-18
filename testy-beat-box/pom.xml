@@ -2,9 +2,9 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <parent>
-        <groupId>fr.irun</groupId>
+        <groupId>fr.ght1pc9kc</groupId>
         <artifactId>testy-box</artifactId>
-        <version>1.4.0-SNAPSHOT</version>
+        <version>1.5.0</version>
     </parent>
 
     <artifactId>testy-beat-box</artifactId>
@@ -13,7 +13,7 @@
 
     <dependencies>
         <dependency>
-            <groupId>fr.irun</groupId>
+            <groupId>fr.ght1pc9kc</groupId>
             <artifactId>testy-core-box</artifactId>
             <version>${project.version}</version>
         </dependency>
@@ -50,8 +50,12 @@
             <artifactId>jackson-databind</artifactId>
         </dependency>
         <dependency>
-            <groupId>com.google.guava</groupId>
-            <artifactId>guava</artifactId>
+            <groupId>com.fasterxml.jackson.module</groupId>
+            <artifactId>jackson-module-parameter-names</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.datatype</groupId>
+            <artifactId>jackson-datatype-jsr310</artifactId>
         </dependency>
         <dependency>
             <groupId>javax.inject</groupId>
@@ -60,6 +64,10 @@
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.jetbrains</groupId>
+            <artifactId>annotations</artifactId>
         </dependency>
 
         <!--TEST-->
@@ -81,6 +89,11 @@
         <dependency>
             <groupId>ch.qos.logback</groupId>
             <artifactId>logback-classic</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.projectreactor</groupId>
+            <artifactId>reactor-test</artifactId>
             <scope>test</scope>
         </dependency>
     </dependencies>
