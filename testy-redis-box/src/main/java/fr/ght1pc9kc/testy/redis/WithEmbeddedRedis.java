@@ -81,7 +81,11 @@ public class WithEmbeddedRedis implements BeforeAllCallback, AfterAllCallback, P
 
     @Override
     public void beforeAll(ExtensionContext context) throws Exception {
-        RedisServer server = new RedisServer(redisPort);
+        RedisServer server = RedisServer.newRedisServer()
+                .serrListener(msg -> log.atError().log(msg))
+                .soutListener(msg -> log.atDebug().log(msg))
+                .port(redisPort)
+                .build();
 
         RedisURI clientUri = RedisURI.create("localhost", server.ports().get(0));
         RedisClient client = RedisClient.create(clientUri);
