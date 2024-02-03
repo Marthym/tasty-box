@@ -44,7 +44,7 @@
 
         <java-inject.version>1</java-inject.version>
         <jetbrains.version>24.0.1</jetbrains.version>
-        <junit.version>5.10.0</junit.version>
+        <junit.version>5.10.1</junit.version>
         <lombok.version>1.18.30</lombok.version>
 
         <amqp-client.version>5.20.0</amqp-client.version>
