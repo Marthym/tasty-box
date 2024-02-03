@@ -26,19 +26,19 @@ import java.time.Duration;
  * </p><p>
  * From this database, an async {@link RedisServer} is created and shared in the context.
  * </p>
- * <p>This extension allow to injection of :
- *  <ul>
- *      <li><code>{@literal @}RedisPort int redisPort</code>: The redis listening port</li>
- *      <li><code>RedisClient client</code>: The redis lettuce client connected to the embedded server</li>
- *      <li><code>RedisServer server</code>: The redis server itself</li>
- *  </ul>
- * </p>
+ * <p>This extension allow to injection of :</p>
+ * <ul>
+ *     <li><code>{@literal @}RedisPort int redisPort</code>: The redis listening port</li>
+ *     <li><code>RedisClient client</code>: The redis lettuce client connected to the embedded server</li>
+ *     <li><code>RedisServer server</code>: The redis server itself</li>
+ * </ul>
+ *
  * <h2>Usage :</h2>
  * <h3>With <code>{@literal @}ExtendWith</code></h3>
- * <pre><code>
- * {@literal @}ExtendWith(WithEmbeddedRedis.class)
+ * <pre>{@code
+ *  @ExtendWith(WithEmbeddedRedis.class)
  *  class WithEmbeddedRedisTest {
- *     {@literal @}Test
+ *      @Test
  *      void should_use_embedded_redis(RedisClient client) {
  *         try (StatefulRedisConnection<String, String> conn = client.connect()) {
  *             RedisCommands<String, String> redisCommands = conn.sync();
@@ -46,21 +46,21 @@ import java.time.Duration;
  *         }
  *     }
  *  }
- * </code></pre>
+ * }</pre>
  *
  * <h3>With <code>{@literal @}RegisterExtension</code></h3>
- * <pre><code>
- * {@literal @}RegisterExtension
- *  public static WithEmbeddedRedis mockRedis = WithEmbeddedRedis.builder().build();
+ * <pre>{@code
+ * @RegisterExtension
+ * public static WithEmbeddedRedis mockRedis = WithEmbeddedRedis.builder().build();
  *
- * {@literal @}Test
- *  void should_use_embedded_redis(RedisClient client) {
- *      try (StatefulRedisConnection<String, String> conn = client.connect()) {
- *          RedisCommands<String, String> redisCommands = conn.sync();
- *          String actual = redisCommands.set("key", "Hello, Redis!");
- *      }
- *  }
- * </code></pre>
+ * @Test
+ * void should_use_embedded_redis(RedisClient client) {
+ *     try (StatefulRedisConnection<String, String> conn = client.connect()) {
+ *         RedisCommands<String, String> redisCommands = conn.sync();
+ *         String actual = redisCommands.set("key", "Hello, Redis!");
+ *     }
+ * }
+ * }</pre>
  *
  * @see <a href="https://github.com/codemonstur/embedded-redis">codemonstur/embedded-redis</a>
  * @see <a href="https://lettuce.io/">lettuce.io</a>
