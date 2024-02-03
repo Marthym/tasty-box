@@ -7,6 +7,7 @@ import de.flapdoodle.embed.mongo.transitions.Mongod;
 import de.flapdoodle.embed.mongo.transitions.RunningMongodProcess;
 import de.flapdoodle.embed.process.io.ProcessOutput;
 import de.flapdoodle.reverse.transitions.Start;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.extension.AfterAllCallback;
 import org.junit.jupiter.api.extension.BeforeAllCallback;
@@ -40,12 +41,13 @@ import java.util.concurrent.atomic.AtomicReference;
 public class WithEmbeddedMongo implements BeforeAllCallback, AfterAllCallback, ParameterResolver {
     private static final Namespace NAMESPACE = Namespace.create(WithEmbeddedMongo.class);
 
+    public static final String P_MONGO_DB_NAME = "mongoDbName";
     private static final String P_MONGO_PROCESS = "mongoPocess";
     private static final String P_MONGO_CLIENT = "mongoClient";
     private static final String P_MONGO_FACTORY = "reactiveMongoFactory";
     private static final String P_MONGO_TEMPLATE = "reactiveMongoTemplate";
-    private static final String P_MONGO_DB_NAME = "mongoDbName";
 
+    @Getter
     private final String databaseName;
     private final AtomicReference<ReactiveMongoDatabaseFactory> atomicMongoFactory;
 
