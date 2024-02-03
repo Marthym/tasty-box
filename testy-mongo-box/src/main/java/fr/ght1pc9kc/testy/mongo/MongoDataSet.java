@@ -17,4 +17,7 @@ public interface MongoDataSet<T> {
      */
     List<T> documents();
 
+    default String identifier() {
+        return "_id";
+    }
 }

@@ -3,15 +3,18 @@ package fr.ght1pc9kc.testy.mongo;
 
 import fr.ght1pc9kc.testy.core.extensions.ChainedExtension;
 import fr.ght1pc9kc.testy.core.extensions.WithObjectMapper;
+import fr.ght1pc9kc.testy.mongo.sample.ClazzDataSet;
 import fr.ght1pc9kc.testy.mongo.sample.DocumentDataSet;
 import org.bson.Document;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.data.mongodb.core.ReactiveMongoTemplate;
 
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -19,6 +22,7 @@ class WithMongoDataTest {
 
     private static final String COLLECTION_0 = "firstCollection";
     private static final String COLLECTION_1 = "secondCollection";
+    private static final String COLLECTION_2 = "dummyCollection";
 
     private static final WithEmbeddedMongo WITH_EMBEDDED_MONGO = WithEmbeddedMongo.builder()
             .build();
@@ -28,6 +32,7 @@ class WithMongoDataTest {
             .withObjectMapper(WITH_OBJECT_MAPPER)
             .addDataset(COLLECTION_0, new DocumentDataSet())
             .addDataset(COLLECTION_1, new DocumentDataSet())
+            .addDataset(COLLECTION_2, new ClazzDataSet())
             .build();
 
     @RegisterExtension
@@ -60,4 +65,14 @@ class WithMongoDataTest {
                 DocumentDataSet.DOCUMENT_WITH_MONGO_ID);
     }
 
+    @Test
+    void should_have_inserted_clazz_data() {
+        final List<Document> actual = mongoTemplate.findAll(Document.class, COLLECTION_2)
+                .collectList()
+                .block();
+
+        assertThat(actual).containsExactly(
+                new Document(Map.of("_id", "Luke", "bar", "Skywalker")),
+                new Document(Map.of("_id", "Obiwan", "bar", "Kenobi")));
+    }
 }

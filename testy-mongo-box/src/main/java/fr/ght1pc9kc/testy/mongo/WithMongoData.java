@@ -79,6 +79,7 @@ import java.util.Optional;
  * </pre>
  */
 public final class WithMongoData implements BeforeEachCallback {
+    private static final String MONGO_ID_FIELD = "_id";
 
     private final WithEmbeddedMongo wEmbeddedMongo;
     private final @Nullable WithObjectMapper wObjectMapper;
@@ -119,9 +120,14 @@ public final class WithMongoData implements BeforeEachCallback {
                     if (o instanceof Document document) {
                         return document;
                     }
-                    return objectMapper.convertValue(o, Document.class);
-                })
-                .toList();
+                    Document doc = objectMapper.convertValue(o, Document.class);
+                    Object identifier = doc.get(dataSet.identifier());
+                    if (identifier != null) {
+                        doc.remove(dataSet.identifier());
+                        doc.put(MONGO_ID_FIELD, identifier);
+                    }
+                    return doc;
+                }).toList();
 
         mongoDb.insertAll(Mono.just(toInsert), collectionName).blockLast();
     }
