@@ -5,15 +5,21 @@ import fr.ght1pc9kc.testy.core.extensions.WithObjectMapper;
 import org.bson.Document;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.junit.jupiter.api.extension.BeforeAllCallback;
 import org.junit.jupiter.api.extension.BeforeEachCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
+import org.junit.jupiter.api.extension.ParameterContext;
+import org.junit.jupiter.api.extension.ParameterResolver;
 import org.springframework.data.mongodb.core.ReactiveMongoTemplate;
 import reactor.core.publisher.Mono;
 
+import javax.inject.Named;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Extension allowing to initialize a mongo database with data.
@@ -77,8 +83,22 @@ import java.util.Optional;
  *     // (...)
  * }
  * </pre>
+ *
+ * <h2>Database Tracker</h2>
+ * <p>For performance reasons, the lib provides a {@link Tracker} that lets the extension know that the database has
+ * not been modified, and that it is therefore not necessary to recreate all the collections.</p>
+ *
+ * <pre><code>
+ * {@literal @}Test
+ *  void should_read_data(WithMongoData.Tracker tracker) {
+ *      tracker.skipNextSampleLoad();
+ *      ...
+ *  }
+ * </code></pre>
  */
-public final class WithMongoData implements BeforeEachCallback {
+public final class WithMongoData implements BeforeEachCallback, BeforeAllCallback, ParameterResolver {
+    private static final String MONGO_ID_FIELD = "_id";
+    private static final String P_TRACKER = "sampleTracker_";
 
     private final WithEmbeddedMongo wEmbeddedMongo;
     private final @Nullable WithObjectMapper wObjectMapper;
@@ -99,6 +119,11 @@ public final class WithMongoData implements BeforeEachCallback {
         this.dataSets = dataSets;
     }
 
+    @Override
+    public void beforeAll(ExtensionContext context) {
+        String dbName = wEmbeddedMongo.getDatabaseName();
+        getStore(context).put(P_TRACKER + dbName, new Tracker());
+    }
 
     @Override
     public void beforeEach(ExtensionContext context) {
@@ -106,11 +131,47 @@ public final class WithMongoData implements BeforeEachCallback {
                 .map(wom -> wom.getObjectMapper(context))
                 .orElseGet(ObjectMapper::new);
         final ReactiveMongoTemplate mongoTemplate = this.wEmbeddedMongo.getMongoTemplate(context);
+        final Tracker tracker = getStore(context).get(P_TRACKER + this.wEmbeddedMongo.getDatabaseName(), Tracker.class);
+
+        if (tracker == null) {
+            throw new IllegalStateException(getClass().getName() + " must be static and package-protected !");
+        } else if (tracker.skipNext.getAndSet(false)) {
+            return;
+        }
 
         dataSets.forEach((collection, dataSet) -> {
             mongoTemplate.dropCollection(collection).block();
             fillCollection(mongoTemplate, objectMapper, collection, dataSet);
         });
+    }
+
+    @Override
+    public boolean supportsParameter(ParameterContext parameterContext, ExtensionContext context) {
+        Class<?> type = parameterContext.getParameter().getType();
+        final String dbName = wEmbeddedMongo.getDatabaseName();
+        return Tracker.class.equals(type) && dbName.equals(getCatalogForParameter(parameterContext, dbName));
+    }
+
+    @Override
+    public Object resolveParameter(ParameterContext parameterContext, ExtensionContext extensionContext) {
+        Class<?> type = parameterContext.getParameter().getType();
+        final String dbName = wEmbeddedMongo.getDatabaseName();
+        if (Tracker.class.equals(type)) {
+            return getStore(extensionContext).get(P_TRACKER + dbName);
+        }
+
+        throw new NoSuchElementException(P_TRACKER + dbName);
+    }
+
+    private String getCatalogForParameter(ParameterContext parameterContext, String dbName) {
+        return parameterContext.findAnnotation(Named.class)
+                .map(Named::value)
+                .orElse(dbName);
+    }
+
+    private ExtensionContext.Store getStore(ExtensionContext context) {
+        String dbName = wEmbeddedMongo.getDatabaseName();
+        return context.getStore(ExtensionContext.Namespace.create(getClass().getName(), dbName));
     }
 
     private void fillCollection(ReactiveMongoTemplate mongoDb, ObjectMapper objectMapper, String collectionName, MongoDataSet<?> dataSet) {
@@ -119,9 +180,14 @@ public final class WithMongoData implements BeforeEachCallback {
                     if (o instanceof Document document) {
                         return document;
                     }
-                    return objectMapper.convertValue(o, Document.class);
-                })
-                .toList();
+                    Document doc = objectMapper.convertValue(o, Document.class);
+                    Object identifier = doc.get(dataSet.identifier());
+                    if (identifier != null) {
+                        doc.remove(dataSet.identifier());
+                        doc.put(MONGO_ID_FIELD, identifier);
+                    }
+                    return doc;
+                }).toList();
 
         mongoDb.insertAll(Mono.just(toInsert), collectionName).blockLast();
     }
@@ -182,6 +248,14 @@ public final class WithMongoData implements BeforeEachCallback {
             return Optional.ofNullable(wObjectMapper)
                     .map(wom -> new WithMongoData(wEmbeddedMongo, wom, Map.copyOf(dataSetsBuilder)))
                     .orElseGet(() -> new WithMongoData(wEmbeddedMongo, Map.copyOf(dataSetsBuilder)));
+        }
+    }
+
+    public static class Tracker {
+        private final AtomicBoolean skipNext = new AtomicBoolean(false);
+
+        public void skipNextSampleLoad() {
+            skipNext.set(true);
         }
     }
 }
