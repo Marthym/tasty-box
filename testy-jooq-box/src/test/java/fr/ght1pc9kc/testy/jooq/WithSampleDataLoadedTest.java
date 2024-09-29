@@ -24,6 +24,7 @@ class WithSampleDataLoadedTest {
     private static final WithDslContext wDslContext = WithDslContext.builder()
             .setDatasourceExtension(wDs).build();
     private static final WithSampleDataLoaded tested = WithSampleDataLoaded.builder(wDslContext)
+            .createTablesIfNotExists()
             .addDataset(JediSampleData.DATASET)
             .addDataset(LightSaberSampleData.DATASET)
             .build();

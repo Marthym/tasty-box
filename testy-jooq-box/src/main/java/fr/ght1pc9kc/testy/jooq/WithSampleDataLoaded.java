@@ -1,10 +1,12 @@
 package fr.ght1pc9kc.testy.jooq;
 
 import fr.ght1pc9kc.testy.jooq.model.RelationalDataSet;
+import org.jooq.CreateTableElementListStep;
 import org.jooq.DSLContext;
 import org.jooq.Key;
 import org.jooq.Query;
 import org.jooq.TableRecord;
+import org.jooq.UniqueKey;
 import org.jooq.impl.DSL;
 import org.junit.jupiter.api.extension.BeforeAllCallback;
 import org.junit.jupiter.api.extension.BeforeEachCallback;
@@ -18,8 +20,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
+
+import static java.util.Objects.nonNull;
 
 /**
  * This extension allows you to load test data into a previously created database.
@@ -91,11 +94,17 @@ public final class WithSampleDataLoaded implements BeforeAllCallback, BeforeEach
             records.stream()
                     .map(TableRecord::getTable)
                     .distinct()
-                    .map(t -> dslContext.createTableIfNotExists(t)
-                            .columns(t.fields())
-                            .primaryKey(Optional.ofNullable(t.getPrimaryKey()).map(Key::getFields).orElse(null))
-                            .constraints(t.getKeys().stream().map(Key::constraint).toList())
-                    )
+                    .map(t -> {
+                        CreateTableElementListStep steps = dslContext.createTableIfNotExists(t)
+                                .columns(t.fields())
+                                .constraints(t.getKeys().stream().map(Key::constraint).toList());
+                        UniqueKey<?> pk = t.getPrimaryKey();
+                        if (nonNull(pk)) {
+                            return steps.primaryKey(pk.getFields());
+                        } else {
+                            return steps;
+                        }
+                    })
                     .forEach(Query::execute);
         }
     }
