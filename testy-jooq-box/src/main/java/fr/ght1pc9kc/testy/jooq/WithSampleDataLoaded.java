@@ -5,7 +5,6 @@ import org.jooq.DSLContext;
 import org.jooq.Key;
 import org.jooq.Query;
 import org.jooq.TableRecord;
-import org.jooq.UpdatableRecord;
 import org.jooq.impl.DSL;
 import org.junit.jupiter.api.extension.BeforeAllCallback;
 import org.junit.jupiter.api.extension.BeforeEachCallback;
@@ -50,16 +49,16 @@ import java.util.concurrent.atomic.AtomicBoolean;
  *         .build();
  *
  * // Use ChainedExtension to chain each declared extensions
- *{@literal @}RegisterExtension
+ * {@literal @}RegisterExtension
  * static ChainedExtension chain = ChainedExtension.outer(wDs)
  *         .append(wDslContext)
  *         .append(wSamples)
  *         .register();
  * </code></pre>
- *
+ * <p>
  * You can now write your test
  * <pre><code>
- *{@literal @}Test
+ * {@literal @}Test
  * void should_get_raw_news(WithSampleDataLoaded.Tracker tracker) { // Inject the modification tracker
  *     tracker.skipNextSampleLoad();    // ask for skipping the next sample reload
  *
@@ -72,10 +71,10 @@ public final class WithSampleDataLoaded implements BeforeAllCallback, BeforeEach
 
     private final WithDslContext wDsl;
 
-    private final List<? extends UpdatableRecord<?>> records;
+    private final List<? extends TableRecord<?>> records;
     private final boolean createTables;
 
-    private WithSampleDataLoaded(Extension wDsl, List<? extends UpdatableRecord<?>> records, boolean createTables) {
+    private WithSampleDataLoaded(Extension wDsl, List<? extends TableRecord<?>> records, boolean createTables) {
         this.wDsl = (WithDslContext) wDsl;
         this.records = List.copyOf(records);
         this.createTables = createTables;
@@ -164,14 +163,14 @@ public final class WithSampleDataLoaded implements BeforeAllCallback, BeforeEach
 
     public static class SampleLoaderBuilder {
         private final Extension dslExtension;
-        private final List<UpdatableRecord<?>> records = new ArrayList<>();
+        private final List<TableRecord<?>> records = new ArrayList<>();
         private boolean createTables = false;
 
         SampleLoaderBuilder(Extension dslExtension) {
             this.dslExtension = dslExtension;
         }
 
-        public <T extends UpdatableRecord<T>> SampleLoaderBuilder addDataset(RelationalDataSet<T> dataset) {
+        public <T extends TableRecord<T>> SampleLoaderBuilder addDataset(RelationalDataSet<T> dataset) {
             records.addAll(dataset.records());
             return this;
         }
